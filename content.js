@@ -17,54 +17,94 @@
   }
 
   // Monta "started" no formato que o Jira espera: yyyy-MM-ddTHH:mm:ss.SSSZZZ
-  function toJiraStarted(dateOnly, hour = 8, minute = 0) {
-    const d = new Date(dateOnly);
-    d.setHours(hour, minute, 0, 0);
-    const pad = (n) => String(n).padStart(2, "0");
+function toJiraStarted(dateOnly, hour = 9, minute = 0) {
+  const d = parseLocalDate(dateOnly);
+  if (isNaN(d)) throw new Error("dateOnly inválida em toJiraStarted: " + dateOnly);
+  d.setHours(hour, minute, 0, 0); // configura horário local
 
-    const yyyy = d.getFullYear();
-    const MM = pad(d.getMonth() + 1);
-    const dd = pad(d.getUTCDate()+1);
-    const HH = pad(d.getHours());
-    const mm = pad(d.getMinutes());
-    const ss = pad(d.getSeconds());
+  const pad = n => String(n).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  const MM = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const HH = pad(d.getHours());
+  const mm = pad(d.getMinutes());
+  const ss = pad(d.getSeconds());
 
-    const tzMin = -d.getTimezoneOffset(); // ex.: -180 para -03:00 => tzMin = 180
-    const sign = tzMin >= 0 ? "+" : "-";
-    const tzh = pad(Math.floor(Math.abs(tzMin) / 60));
-    const tzm = pad(Math.abs(tzMin) % 60);
-    // Jira costuma aceitar "+0300" (sem dois-pontos)
-    const tz = `${sign}${tzh}${tzm}`;
+  // timezone (ex: -0300)
+  const tzMin = -d.getTimezoneOffset(); // se getTimezoneOffset() === 180 => tzMin = -180
+  const sign = tzMin >= 0 ? "+" : "-";
+  const tzh = pad(Math.floor(Math.abs(tzMin) / 60));
+  const tzm = pad(Math.abs(tzMin) % 60);
+  const tz = `${sign}${tzh}${tzm}`;
 
-    return `${yyyy}-${MM}-${dd}T${HH}:${mm}:${ss}.000${tz}`;
+  return `${yyyy}-${MM}-${dd}T${HH}:${mm}:${ss}.000${tz}`;
+}
+
+function parseLocalDate(input) {
+  if (input instanceof Date) {
+    // normaliza para meia-noite local
+    return new Date(input.getFullYear(), input.getMonth(), input.getDate());
+  }
+  if (typeof input !== "string") return new Date(NaN);
+
+  const base = input.split("T")[0].trim(); // ignora parte horária se existir
+
+  if (base.includes("-")) {
+    const parts = base.split("-").map(Number);
+    if (parts.length !== 3) return new Date(NaN);
+    // se primeira parte > 31 assumimos YYYY-MM-DD, senão assumimos DD-MM-YYYY
+    if (parts[0] > 31) {
+      // YYYY - MM - DD
+      return new Date(parts[0], parts[1] - 1, parts[2]);
+    } else {
+      // DD - MM - YYYY (caso raro)
+      return new Date(parts[2], parts[1] - 1, parts[0]);
+    }
   }
 
+  if (base.includes("/")) {
+    const parts = base.split("/").map(Number);
+    if (parts.length !== 3) return new Date(NaN);
+    // formato esperado: DD/MM/YYYY
+    return new Date(parts[2], parts[1] - 1, parts[0]);
+  }
+
+  return new Date(NaN);
+}
   // Expande o range (inclusive). Se todayOnly=true, ignora range.
-  async function expandDates({ startDate, endDate, todayOnly }) {
-    const out = [];
-    
-    if (todayOnly) {
-      const t = new Date();
-      const today = t.toISOString().slice(0, 10);
-      const feriados = await GetFeriados(today)
-      if (!feriados.includes(today)) {
-        out.push(today);
-      }
-      return out;
-    }
-    if (!startDate || !endDate) return out;
+async function expandDates({ startDate, endDate, todayOnly }) {
+  const out = [];
+  const now = new Date();
+  let feriados = [...new Set(await GetFeriados(now))]; // GetFeriados aceita Date
 
-    const start = new Date(startDate + "T00:00:00");
-    const end = new Date(endDate + "T00:00:00");
-    if (isNaN(start) || isNaN(end) || start > end) return out;
-
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      var dias = d.toISOString().slice(0, 10)
-      const feriados = await GetFeriados(dias)
-      if(!feriados.includes(dias)) {out.push(dias);}
+  if (todayOnly) {
+    const today = formatDateLocal(now);
+    if (!feriados.includes(today) && !isWeekend(today)) {
+      out.push(today);
     }
     return out;
   }
+
+  if (!startDate || !endDate) return out;
+
+  const start = parseLocalDate(startDate);
+  const end = parseLocalDate(endDate);
+  if (isNaN(start) || isNaN(end) || start > end) return out;
+
+  // se atravessa anos, traga também os feriados do ano final
+  if (start.getFullYear() !== end.getFullYear()) {
+    feriados = [...new Set([...feriados, ...(await GetFeriados(end))])];
+  }
+
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dia = formatDateLocal(d);
+    if (!isWeekend(dia) && !feriados.includes(dia)) {
+      out.push(dia);
+    }
+  }
+
+  return out;
+}
 
   // Tenta via REST API (rodando no mesmo domínio logado)
   async function addWorklogAPI(issueKey, dateOnly, hours, commentText) {
@@ -102,10 +142,10 @@
 
     // Obtem os dias de feriados
 async function GetFeriados(dateOnly) {
-    const v_data = new Date(dateOnly);
+    const v_data = parseLocalDate(dateOnly).getFullYear();
 
     const res = await fetch(
-    `https://brasilapi.com.br/api/feriados/v1/${v_data.getFullYear()}`
+    `https://brasilapi.com.br/api/feriados/v1/${v_data}`
   );
 
   if (!res.ok) {
@@ -115,6 +155,22 @@ async function GetFeriados(dateOnly) {
 
   const data = await res.json();
   return data.map(value => value.date); // lista de feriados
+}
+
+function formatDateLocal(dateInput) {
+  const d = parseLocalDate(dateInput);
+  if (isNaN(d)) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+
+function isWeekend(dateInput) {
+  const d = parseLocalDate(dateInput);
+  if (isNaN(d)) return false;
+  const day = d.getDay(); // 0 = domingo, 6 = sábado (local)
+  return day === 0 || day === 6;
 }
 
   // Fallback via UI (melhor esforço; seletores variam entre tenants/temas)
