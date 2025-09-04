@@ -6,26 +6,36 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <h3>Registrar Horas no Jira</h3>
-  <label>Tarefa (Issue Key):</label>
-  <input type="text" id="issue" placeholder="PROJ-123">
+  <div class="card">
+    <h3>⏱️ Registrar Horas no Jira</h3>
 
-  <label>Horas:</label>
-  <input type="number" id="hours" step="0.5" min="0">
+    <label>Tarefa (Issue Key):</label>
+    <input type="text" id="issue" placeholder="PROJ-123">
 
-  <div class="date-range">
-    <label>Data inicial:</label>
-    <input type="date" id="startDate">
-    <label>Data final:</label>
-    <input type="date" id="endDate">
+    <label>Horas:</label>
+    <input type="number" id="hours" step="0.5" min="0">
+
+    <div class="date-range">
+      <div>
+        <label>Data inicial:</label>
+        <input type="date" id="startDate">
+      </div>
+      <div>
+        <label>Data final:</label>
+        <input type="date" id="endDate">
+      </div>
+    </div>
+
+    <div class="switch">
+      <input type="checkbox" id="todayOnly">
+      <span>Usar apenas data atual</span>
+    </div>
+
+    <div id="hint" class="hint"></div>
+
+    <button id="registerBtn">Registrar</button>
+    <div class="status"></div>
   </div>
-
-  <label>
-    <input type="checkbox" id="todayOnly">
-    Usar apenas data atual
-  </label>
-
-  <button id="registerBtn">Registrar</button>
 
   <script src="popup.js"></script>
 </body>
