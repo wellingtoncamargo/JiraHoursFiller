@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Jira Hours Filler",
+  "description": "Preencha sua planilha de horas no Jira automaticamente",
+  "version": "1.0",
+  "permissions": ["scripting", "activeTab", "storage"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.atlassian.net/*"],
+      "js": ["content.js"]
+    }
+  ]
+}

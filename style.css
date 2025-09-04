@@ -1,0 +1,137 @@
+:root {
+  --bg: #0b1220;
+  --card: #121a2b;
+  --text: #e8eefc;
+  --muted: #9bb0d3;
+  --accent: #2f6feb;
+  --accent-2: #00b3a4;
+  --border: #203053;
+  --danger: #ff5b5b;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+  background: var(--bg);
+  color: var(--text);
+  width: 340px;
+  padding: 16px;
+}
+
+h3 {
+  margin: 0 0 12px;
+  font-size: 16px;
+  letter-spacing: .2px;
+}
+
+label {
+  font-size: 12px;
+  color: var(--muted);
+  display: block;
+  margin: 10px 0 6px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="date"] {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  outline: none;
+}
+
+.date-range {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 10px;
+  align-items: end;
+}
+
+.switch {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 6px;
+}
+
+.switch input {
+  appearance: none;
+  width: 44px;
+  height: 24px;
+  background: #263655;
+  border-radius: 999px;
+  position: relative;
+  outline: none;
+  cursor: pointer;
+  transition: background .2s ease;
+  border: 1px solid var(--border);
+}
+.switch input:checked { background: linear-gradient(135deg, var(--accent), var(--accent-2)); }
+.switch input::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 3px;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  background: white;
+  transition: left .2s ease;
+}
+.switch input:checked::after { left: 23px; }
+
+.hint {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+button#registerBtn {
+  width: 100%;
+  margin-top: 14px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: white;
+  border: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform .04s ease, filter .2s ease;
+}
+button#registerBtn:active { transform: translateY(1px); }
+
+.status {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* mini-toast que o content.js injeta dentro da página do Jira */
+#jira-hours-toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  background: #0e1a2f;
+  color: #dbe6ff;
+  padding: 10px 12px;
+  border: 1px solid #27406e;
+  border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0,0,0,.35);
+  font-size: 12px;
+  z-index: 999999;
+  max-width: 320px;
+}
+#jira-hours-toast.success { border-color: #1e7f5b; }
+#jira-hours-toast.error { border-color: #9b3434; }
