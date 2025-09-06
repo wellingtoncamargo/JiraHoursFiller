@@ -1,4 +1,5 @@
 const $ = (s) => document.querySelector(s);
+// const themeToggle = document.getElementById("themeToggle");
 
 (async function init() {
   // restaurar últimos valores
@@ -23,15 +24,40 @@ const $ = (s) => document.querySelector(s);
   $("#endDate").addEventListener("input", updateHint);
 })();
 
+// chrome.storage.sync.get("theme", ({ theme }) => {
+//   if (theme === "light") {
+//     document.documentElement.classList.add("light"); // aplica no <html>
+//     themeToggle.checked = true;
+//   } else {
+//     document.documentElement.classList.remove("light");
+//     themeToggle.checked = false;
+//   }
+// });
+
+// // Listener para alternar tema
+// themeToggle.addEventListener("change", async () => {
+//   if (themeToggle.checked) {
+//     document.documentElement.classList.add("light"); // aplica no <html>
+//     await chrome.storage.sync.set({ theme: "light" });
+//   } else {
+//     document.documentElement.classList.remove("light");
+//     await chrome.storage.sync.set({ theme: "dark" });
+//   }
+// });
+
+
 function updateHint() {
   const todayOnly = $("#todayOnly").checked;
   const start = $("#startDate").value;
   const end = $("#endDate").value;
   const el = $("#hint");
+  // habilita/desabilita campos de data
+  $("#startDate").disabled = todayOnly;
+  $("#endDate").disabled = todayOnly;
   if (todayOnly) {
-    el.textContent = "Será registrada apenas a data de hoje.";
+    el.textContent = "Será registrado apenas a data de hoje.";
   } else if (start && end) {
-    el.textContent = `Será registrado de ${start} até ${end} (inclusive).`;
+    el.textContent = `Será registrado de ${start} até ${end}.`;
   } else {
     el.textContent = "Defina um intervalo de datas ou use 'apenas hoje'.";
   }
